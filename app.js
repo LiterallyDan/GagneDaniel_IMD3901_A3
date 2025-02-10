@@ -12,11 +12,11 @@ app.get( '/', function( req, res ){
 });
 
 app.get( '/2D', function( req, res ){ 
-    res.sendFile( __dirname + '/public/2D.html' );
+    res.sendFile( __dirname + '/public/Desktop.html' );
 });
 
 app.get( '/3D', function( req, res ){ 
-    res.sendFile( __dirname + '/public/3D.html' );
+    res.sendFile( __dirname + '/public/Mobile.html' );
 });
 
 //socket.io stuff
@@ -24,23 +24,24 @@ app.get( '/3D', function( req, res ){
 io.on('connection', (socket) => {
     console.log( socket.id + " connected" );
 
+
     socket.on('disconnect', () => {
         console.log( socket.id + " disconnected" );
     });
 
     socket.on("red", (data) => {
-        console.log( "red event received" );
-        io.emit("color_change", {r:255, g:0, b:0});         //to all connected clients
-        //io.socket.emit("color_change", {r:255, g:0, b:0});  //to everyone but sender
+        io.emit("move_box");
     });
-
+    
     socket.on("blue", (data) => {
-        console.log( "blue event received" );
-        io.emit("color_change", {r:0, g:0, b:255});
+        io.emit("box_move");
     });
 
-    //question 1: how do you continuously update the network, e.g., users position and orientation?
-    //question 2: how do you synch clients to current state?
+    socket.on("painting", (data) => {
+        console.log("Painting Item: ", data.id);
+        io.emit("paint_change", { id: data.id, r:0, g:255, b:0});
+    });
+
 });
 
 app.use(express.static(__dirname + '/public')); //set root path of server ...
