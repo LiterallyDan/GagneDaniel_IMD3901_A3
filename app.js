@@ -42,6 +42,14 @@ io.on('connection', (socket) => {
         io.emit("paint_change", { id: data.id, r:0, g:255, b:0});
     });
 
+    socket.on("paintreset", (data) => {
+        io.emit("reset_paint");
+    });
+
+    socket.on("scorereset", (data) => {
+        io.emit("reset_score");
+    });
+
 });
 
 app.use(express.static(__dirname + '/public')); //set root path of server ...

@@ -1,10 +1,67 @@
-<html>
-    <head></head>
-    <body>
-        <p> Choose whether you are on desktop or mobile </p>
-        <ul>
-            <li><a href="/Desktop.html"> Desktop </a></li>
-            <li><a href="/Mobile.html"> Mobile </a></li>
-        </ul>
-    </body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Choose Your Platform</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+            padding: 5vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        p {
+            font-size: max(2.5vw, 16px); /* scales with screen size */
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 4vh;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 2vh;
+        }
+        a {
+            display: inline-block;
+            padding: 2vh 4vw;
+            text-decoration: none;
+            font-size: max(2vw, 14px); 
+            font-weight: bold;
+            color: white;
+            background-color: #007BFF;
+            border-radius: 2vw;
+            transition: background 0.3s ease;
+            width: 40vw; /* scales with screen width */
+            max-width: 250px; /* max width */
+            text-align: center;
+        }
+        a:hover {
+            background-color: #0056b3;
+        }
+        @media (min-width: 600px) {
+            ul {
+                flex-direction: row;
+            }
+            a {
+                width: 20vw;
+            }
+        }
+    </style>
+</head>
+<body>
+    <p>Choose your platform:</p>
+    <ul>
+        <li><a href="/Desktop.html">Desktop</a></li>
+        <li><a href="/Mobile.html">Mobile</a></li>
+    </ul>
+</body>
 </html>

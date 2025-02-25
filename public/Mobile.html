@@ -5,6 +5,24 @@
         <meta charset="utf-8" />
         <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
         <script src="https://unpkg.com/aframe-environment-component@1.3.3/dist/aframe-environment-component.min.js"></script>
+        <!-- teleport pads -->
+        <script>
+            AFRAME.registerComponent('teleport_player', 
+            {
+                init: function()
+                {
+                    this.el.addEventListener('click', function()
+                    {
+                        console.log("Teleported");
+                        let targetPos = this.getAttribute('position');
+                        let cam = document.querySelector('#mainCamera'); 
+                               
+                        console.log('Position: ', targetPos);
+                        cam.setAttribute('position', {x: targetPos.x, y: targetPos.y + 1.1, z: targetPos.z});
+                    });
+                }
+            });
+        </script>
     </head>
 
     <body>
@@ -18,9 +36,16 @@
             <a-asset-item id="v_rules" src="Models/versusRules.glb" response-type="arraybuffer"></a-asset-item>
             <a-asset-item id="c_rules" src="Models/coopRules.glb" response-type="arraybuffer"></a-asset-item>
             <a-asset-item id="reset_button" src="Models/resetButton.glb" response-type="arraybuffer"></a-asset-item>
+            <a-asset-item id="teleport_pad" src="Models/tpPad.glb" response-type="arraybuffer"></a-asset-item>
 
+            <!-- Audio -->
+             <audio id="paint-snd" src="Audio/bloop.mp3" preload="auto" crossorigin="anonymous"></audio> <!-- https://pixabay.com/sound-effects/bloop-2-186531/ -->
+             <audio id="box-snd" src="Audio/box.mp3" preload="auto" crossorigin="anonymous"></audio> <!-- https://pixabay.com/sound-effects/bonk-46000/ -->
+             <audio id="music-snd" src="Audio/music.mp3" preload="auto" crossorigin="anonymous"></audio> <!-- https://pixabay.com/sound-effects/andrey-psyche-chill-instrumental-61576/ -->
+             <audio id="reset-snd" src="Audio/reset.mp3" preload="auto" crossorigin="anonymous"></audio> <!-- https://pixabay.com/sound-effects/button-124476/ -->
+             
             <!-- Camera -->
-            <a-entity camera wasd-controls look-controls position="0 2.1 0">
+            <a-entity id="mainCamera" camera wasd-controls look-controls position="0 2.1 0">
                 <a-entity cursor="rayOrigin:mouse;" raycaster="far:20; interval:200; objects:.interactive"></a-entity>
             </a-entity>
 
@@ -137,6 +162,18 @@
                 <a-entity class="paint interactive" id="box_8_8" position="0 7.35 -7.35" geometry="primitive:box; width:1.0; height:1.0; depth:1.0" material="color:rgb(255, 255, 255)"></a-entity>
             </a-entity>
             
+            <!-- Teleport Pads -->
+             <a-entity id="teleportPads">
+                <a-entity class="tp interactive" scale="0.4 0.4 0.4" position="0 0.55 0" gltf-model="#teleport_pad" teleport_player></a-entity> 
+                <a-entity class="tp interactive" scale="0.4 0.4 0.4" position="0 0.55 5" gltf-model="#teleport_pad" teleport_player></a-entity> 
+                <a-entity class="tp interactive" scale="0.4 0.4 0.4" position="0 0.55 -5" gltf-model="#teleport_pad" teleport_player></a-entity> 
+                <a-entity class="tp interactive" scale="0.4 0.4 0.4" position="-5 0.55 5" gltf-model="#teleport_pad" teleport_player></a-entity> 
+                <a-entity class="tp interactive" scale="0.4 0.4 0.4" position="-5 0.55 -5" gltf-model="#teleport_pad" teleport_player></a-entity> 
+                <a-entity class="tp interactive" scale="0.4 0.4 0.4" position="-10 0.55 -5" gltf-model="#teleport_pad" teleport_player></a-entity> 
+                <a-entity class="tp interactive" scale="0.4 0.4 0.4" position="-10 0.55 5" gltf-model="#teleport_pad" teleport_player></a-entity> 
+                <a-entity class="tp interactive" scale="0.4 0.4 0.4" position="-10 0.55 0" gltf-model="#teleport_pad" teleport_player></a-entity> 
+             </a-entity>
+            
 
             <!-- world -->
             <a-entity environment="preset:forest;"></a-entity>
@@ -149,6 +186,7 @@
             socket.on('connect', (userData) => {
                 console.log('I exist!');
 
+                
                 //put code here so that we know that socket.io has initailized ...
                 document.querySelector('#red_button').querySelector('.button').addEventListener('click', function(){
                     socket.emit('red');
@@ -156,6 +194,14 @@
 
                 document.querySelector('#blue_button').querySelector('.button').addEventListener('click', function(){
                     socket.emit('blue');
+                });
+
+                document.querySelector('#paint_box').querySelector('.reset').addEventListener('click', function(){
+                    socket.emit('paintreset');
+                });
+
+                document.querySelector('#score_counters').querySelector('.reset').addEventListener('click', function(){
+                    socket.emit('scorereset');
                 });
 
                 document.querySelector('#paint_box').querySelectorAll('.paint').forEach(function(paintListener) //loop through all paint boxes and add EL
@@ -183,12 +229,38 @@
                 //set new position
                 box.setAttribute('position', `${newPos.x} ${newPos.y} ${newPos.z + 0.1}`);
 
+                //sound
+                let boxSound = document.getElementById("box-snd");
+                boxSound.currentTime = 0; //reset sound 
+                boxSound.play();
+
                 //if they reach the "score" area
                 if(box.getAttribute('position').z > 5.0)
                 {
                     box.setAttribute('position', '0 0 0');
                     updateScoreRed();
                 }
+            });
+
+            socket.on('reset_score', (data) => {
+                    setScoreZero();
+                    //sound
+                    let resetSound = document.getElementById("reset-snd");
+                    resetSound.currentTime = 0; //reset sound 
+                    resetSound.play();
+                });
+
+            socket.on('reset_paint', (data) => {
+                document.querySelector('#paint_box').querySelectorAll('.paint').forEach(element => {
+                    //reset the color to white for each box
+                    let whiteClr = 'rgb(255, 255, 255)';
+                    element.setAttribute('material', 'color', whiteClr);
+                    
+                    //sound
+                    let resetSound = document.getElementById("reset-snd");
+                    resetSound.currentTime = 0; //reset sound 
+                    resetSound.play();
+                });
             });
 
             socket.on('box_move', (data) => {
@@ -198,6 +270,11 @@
                 newPos = box.getAttribute('position');
                 
                 box.setAttribute('position', `${newPos.x} ${newPos.y} ${newPos.z - 0.1}`);
+
+                //play sound
+                let boxSound = document.getElementById("box-snd");
+                boxSound.currentTime = 0; //reset sound 
+                boxSound.play();
 
                 //if they reach the "score" area
                 if(box.getAttribute('position').z < -5.0)
@@ -222,6 +299,10 @@
                 let yellowClr = 'rgb(255, 255, 0)';
                 let whiteClr = 'rgb(255, 255, 255)';
 
+                //sound
+                let paintSound = document.getElementById("paint-snd");
+                paintSound.currentTime = 0; //reset sound 
+                paintSound.play();
                 
                 //get object ID so we know which block to change color of
                 let clickedObject = document.getElementById(data.id);
@@ -302,6 +383,7 @@
                 //grab the text element
                 let scoreText = document.getElementById("score_text_blue");
 
+                //set score
                 let currentScore = parseInt(scoreText.getAttribute('value')) || 0; //default to zero
                 currentScore++;
 
@@ -314,12 +396,33 @@
                 //grab the text element
                 let scoreTextRed = document.getElementById("score_text_red");
 
+                //set score
                 let currentRedScore = parseInt(scoreTextRed.getAttribute('value')) || 0; //default to zero
                 currentRedScore++;
 
                 scoreTextRed.setAttribute('value', currentRedScore.toString());
 
             }
+
+            function setScoreZero()
+            {
+                //get text
+                let scoreText = document.getElementById("score_text_blue");
+                let scoreTextRed = document.getElementById("score_text_red");
+
+                //turn into string
+                let currentRedScore = parseInt(scoreTextRed.getAttribute('value'));
+                let currentScore = parseInt(scoreText.getAttribute('value'));
+
+                //set to zero
+                currentRedScore = 0;
+                currentScore = 0;
+
+                //set values
+                scoreTextRed.setAttribute('value', currentRedScore.toString());
+                scoreText.setAttribute('value', currentScore.toString());
+            }
+
             </script>
     </body>
 </html>
